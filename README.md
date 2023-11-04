@@ -47,7 +47,7 @@ sequenceDiagram
     GUI ->> GUI : Display a geometry
 ```
 
-In the next diagram, a client sends an incorrect SQL query:
+In the next diagram, a user sends an incorrect SQL query that does not query any geometry data:
 
 ```mermaid
 sequenceDiagram
@@ -55,6 +55,32 @@ sequenceDiagram
     API->>+Database: Send a query
     Database -->>- API : Send a result set
     API ->> API : Transform a result set
+    alt a result set does not contain any geometry data
+        API-->>GUI: Send an error message that there is no geometry data
+        GUI ->> GUI : Display an error message to a user
+    else otherwise
+        API-->>-GUI: Send a result set
+    end
+    GUI ->> GUI : Display a geometry
+```
+
+In the last scenario diagram, a user sends a SQL query that contains any syntax error:
+
+```mermaid
+sequenceDiagram
+    GUI->>+API: Send a query request
+    API->>+Database: Send a query
+    alt a query contains a syntax error
+        Database-->>API: Send an error message that there is a syntax error
+        API ->> GUI : Send an error message that there is a syntax error
+        GUI ->> GUI : Display an error to a user
+    else otherwise
+        Database -->>- API : Send a result set
+    end
+    API ->> API : Transform a result set
     API-->>-GUI: Send a result set
     GUI ->> GUI : Display a geometry
 ```
+
+## GUI model
+
