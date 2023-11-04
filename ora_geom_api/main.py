@@ -106,9 +106,8 @@ async def geometry(request: GeometryRequest) -> list[SdoGeometry]:
         )
 
     data: list = execute_sql(request.sql)
-    validation = validate_data(data)
 
-    match validation:
+    match validate_data(data):
         case Validation.EmptySet:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
