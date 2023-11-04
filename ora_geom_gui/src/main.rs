@@ -1,29 +1,29 @@
-use eframe::{egui, Theme};
+pub mod geometry_viewer;
+
+use eframe::egui;
+use egui::Visuals;
+use geometry_viewer::GeometryViewer;
+use tracing::Level;
+use tracing_subscriber::FmtSubscriber;
 
 fn main() -> Result<(), eframe::Error> {
+    let subscriber = FmtSubscriber::builder()
+        .with_max_level(Level::INFO)
+        .finish();
+    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
+
     let options = eframe::NativeOptions {
-        initial_window_size: Some(egui::vec2(320.0, 240.0)),
-        default_theme: Theme::Light,
+        initial_window_size: Some(egui::vec2(1280.0, 720.0)),
         ..Default::default()
     };
 
-    // Our application state:
-    let mut name = "Arthur".to_owned();
-    let mut age = 42;
-
-    eframe::run_simple_native("My egui App", options, move |ctx, _frame| {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("My egui Application");
-            ui.horizontal(|ui| {
-                let name_label = ui.label("Your name: ");
-                ui.text_edit_singleline(&mut name)
-                    .labelled_by(name_label.id);
-            });
-            ui.add(egui::Slider::new(&mut age, 0..=120).text("age"));
-            if ui.button("Click each year").clicked() {
-                age += 1;
-            }
-            ui.label(format!("Hello '{name}', age {age}"));
-        });
-    })
+    eframe::run_native(
+        "Oracle Geometry Viewer",
+        options,
+        Box::new(|cc| {
+            cc.egui_ctx.set_visuals(Visuals::dark());
+            let viewer = GeometryViewer::new();
+            Box::new(viewer)
+        }),
+    )
 }
