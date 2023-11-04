@@ -42,7 +42,7 @@ sequenceDiagram
     GUI->>+API: Send a query request
     API->>+Database: Send a query
     Database -->>- API : Send a result set
-    API ->> API : Transform a result set
+    API ->> API : Transform a result set to JSON
     API-->>-GUI: Send a result set
     GUI ->> GUI : Display a geometry
 ```
@@ -54,7 +54,7 @@ sequenceDiagram
     GUI->>+API: Send a query request
     API->>+Database: Send a query
     Database -->>- API : Send a result set
-    API ->> API : Transform a result set
+    API ->> API : Transform a result set to JSON
     alt a result set does not contain any geometry data
         API-->>GUI: Send an error message that there is no geometry data
         GUI ->> GUI : Display an error message to a user
@@ -77,10 +77,9 @@ sequenceDiagram
     else otherwise
         Database -->>- API : Send a result set
     end
-    API ->> API : Transform a result set
+    API ->> API : Transform a result set to JSON
     API-->>-GUI: Send a result set
     GUI ->> GUI : Display a geometry
 ```
 
 ## GUI model
-
