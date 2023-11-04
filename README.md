@@ -81,5 +81,3 @@ sequenceDiagram
     API-->>-GUI: Send a result set
     GUI ->> GUI : Display a geometry
 ```
-
-## GUI model
