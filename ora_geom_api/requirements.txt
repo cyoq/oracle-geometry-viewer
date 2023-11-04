@@ -1,4 +1,4 @@
 uvicorn==0.23.2
 fastapi==0.104.1
 oracledb==1.4.2
-python-dotenv==1.0.0
+pydantic-settings==2.0.3
