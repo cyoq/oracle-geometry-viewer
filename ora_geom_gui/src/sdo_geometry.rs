@@ -2,6 +2,7 @@ use std::f64::consts::TAU;
 
 use egui::{remap, Color32, Pos2, Stroke};
 use egui_plot::{Line, PlotPoints, Polygon};
+use serde::Deserialize;
 
 // https://www.reddit.com/r/learnrust/comments/lfw6uy/comment/gmqqhg2/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
 fn collect_array<T, I, const N: usize>(itr: I) -> [T; N]
@@ -17,6 +18,7 @@ where
     res
 }
 
+#[derive(Deserialize, Debug)]
 pub struct SdoGeometry {
     pub sdo_gtype: f32,
     pub sdo_srid: Option<f32>,

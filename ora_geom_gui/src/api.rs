@@ -1,11 +1,17 @@
+use std::io;
+
 use egui::{Color32, RichText};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+use crate::sdo_geometry::SdoGeometry;
+
 #[derive(thiserror::Error, Debug)]
 pub enum GeometryApiError {
-    #[error("Failed fetching geometries")]
+    #[error("Failed fetching geometries: {0}")]
     RequestFailed(#[from] ureq::Error),
+    #[error("Failed to convert JSON data")]
+    JsonConversionFailed(#[from] io::Error),
     #[error("Url parsing failed")]
     UrlParsing(#[from] url::ParseError),
     #[error("Request failed: {0}")]
@@ -39,6 +45,13 @@ impl GeometryApi {
         Ok(url.to_string())
     }
 
+    pub fn geometry_url(&self) -> Result<String, GeometryApiError> {
+        let mut url = Url::parse(&self.api_url)?;
+        url.path_segments_mut().unwrap().push("geometry");
+
+        Ok(url.to_string())
+    }
+
     pub fn test_connection(&self) -> Result<ApiHealth, GeometryApiError> {
         let url = self.healtchcheck_url()?;
         let req = ureq::get(&url);
@@ -47,6 +60,17 @@ impl GeometryApi {
             200 => Ok(ApiHealth::Ok),
             _ => Ok(ApiHealth::Error(response.status_text().to_string())),
         }
+    }
+
+    pub fn fetch_geometries(&self, sql: &str) -> Result<Vec<SdoGeometry>, GeometryApiError> {
+        let url = self.geometry_url()?;
+        let req = ureq::post(&url);
+        let response = req.send_json(ureq::json!({
+            "sql": sql
+        }))?;
+
+        let data: Vec<SdoGeometry> = response.into_json()?;
+        Ok(data)
     }
 
     pub fn connection_status(&self) -> RichText {
