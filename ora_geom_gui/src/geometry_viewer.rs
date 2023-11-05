@@ -1,15 +1,16 @@
-use std::f64::consts::TAU;
-
 use eframe::App;
 use egui::{
-    emath, remap, Align, Button, Color32, Frame, Hyperlink, Layout, Pos2, Rect, Response, RichText,
-    Sense, SidePanel, Stroke, Ui, Vec2, Visuals, Window,
+    ahash::HashMap, remap, Align, Button, Color32, Frame, Hyperlink, Layout, Response, RichText,
+    SidePanel, Stroke, Ui, Visuals, Window,
 };
-use egui_plot::{Line, Plot, PlotPoint, PlotPoints, PlotResponse, Polygon};
+use egui_plot::{Line, Plot, PlotPoints, Polygon};
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
-use crate::sdo_geometry::SdoGeometry;
+use crate::{
+    query::{Query, QueryWindow},
+    sdo_geometry::SdoGeometry,
+};
 
 const PADDING: f32 = 15.0;
 const CONFY_APP: &'static str = "oracle_geometry_viewer";
@@ -61,12 +62,38 @@ impl Default for GeometryViewerConfig {
     }
 }
 
+pub struct InputQuery {
+    pub sql: String,
+    pub name: String,
+}
+
+impl InputQuery {
+    pub fn new() -> Self {
+        Self {
+            sql: "-- A very simple example\n\
+SELECT\n\
+\tGEOMETRY\n\
+FROM\n\
+\tBUILDINGS;\n\
+"
+            .into(),
+            name: String::from(""),
+        }
+    }
+
+    pub fn clear(&mut self) {
+        self.sql = String::from("");
+        self.name = String::from("");
+    }
+}
+
 pub struct GeometryViewer {
     pub config: GeometryViewerConfig,
     pub show_api_config_window: bool,
+    pub show_query_window: bool,
     pub connection_status: RichText,
-    pub name: String,
-    pub age: u32,
+    pub queries: HashMap<String, Query>,
+    pub input_query: InputQuery,
 }
 
 impl GeometryViewer {
@@ -76,13 +103,14 @@ impl GeometryViewer {
         Self {
             config,
             show_api_config_window: true,
+            show_query_window: false,
             connection_status: RichText::new(""),
-            name: String::from("Arthur"),
-            age: 42,
+            queries: HashMap::default(),
+            input_query: InputQuery::new(),
         }
     }
 
-    pub fn side_panel(&mut self, ctx: &egui::Context, ui: &mut Ui) {
+    pub fn side_panel(&mut self, ui: &mut Ui) {
         ui.vertical_centered(|ui| {
             ui.heading("Oracle Geometry Viewer");
         });
@@ -142,7 +170,7 @@ impl GeometryViewer {
             let geometry_button = ui.add(Button::new("Add geometry"));
 
             if geometry_button.clicked() {
-                info!("Clicked geometry!");
+                self.show_query_window = true;
             }
         });
     }
@@ -242,27 +270,13 @@ impl GeometryViewer {
             if let Some(poly) = sdo_object.create_polygon(Stroke::new(5., Color32::RED)) {
                 plot_ui.polygon(poly)
             }
-            plot_ui.line(self.circle());
+            // plot_ui.line(self.circle());
             plot_ui.pointer_coordinate();
             plot_ui.pointer_coordinate_drag_delta();
             plot_ui.plot_bounds();
             plot_ui.response().hovered();
         })
         .response
-    }
-
-    fn circle(&self) -> Line {
-        let n = 512;
-        let circle_points: PlotPoints = (0..=n)
-            .map(|i| {
-                let t = remap(i as f64, 0.0..=(n as f64), 0.0..=TAU);
-                let r = 3.;
-                [r * t.cos() + 4. as f64, r * t.sin() + 4. as f64]
-            })
-            .collect();
-        Line::new(circle_points)
-            .color(Color32::from_rgb(100, 200, 100))
-            .name("circle")
     }
 }
 
@@ -280,11 +294,16 @@ impl App for GeometryViewer {
             self.render_api_config(ctx);
         }
 
+        if self.show_query_window {
+            QueryWindow::new(&mut self.queries, &mut self.input_query)
+                .show(ctx, &mut self.show_query_window);
+        }
+
         SidePanel::new(egui::panel::Side::Left, "side_panel")
             .max_width(BOARD_PANEL_WIDTH)
             .min_width(BOARD_PANEL_WIDTH)
             .resizable(false)
-            .show(ctx, |ui| self.side_panel(ctx, ui));
+            .show(ctx, |ui| self.side_panel(ui));
 
         egui::CentralPanel::default().show(ctx, |ui| {
             Frame::canvas(ui.style()).show(ui, |ui| self.geometry_content(ui));
