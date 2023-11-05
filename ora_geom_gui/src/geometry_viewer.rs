@@ -1,15 +1,14 @@
 use eframe::App;
 use egui::{
-    ahash::HashMap, Align, Button, Color32, Frame, Hyperlink, Layout, Response, RichText,
-    SidePanel, Stroke, Ui, Visuals, Window,
+    ahash::HashMap, Align, Button, CollapsingHeader, Color32, Frame, Hyperlink, Layout, Response,
+    RichText, SidePanel, Stroke, Ui, Visuals, Window,
 };
-use egui_plot::{Line, Plot, Polygon};
+use egui_plot::Plot;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     api::GeometryApi,
     query::{Query, QueryWindow},
-    sdo_geometry::SdoGeometry,
 };
 
 const PADDING: f32 = 15.0;
@@ -37,8 +36,8 @@ pub struct InputQuery {
     pub message: RichText,
 }
 
-impl InputQuery {
-    pub fn new() -> Self {
+impl Default for InputQuery {
+    fn default() -> Self {
         Self {
             sql: "-- A very simple example\n\
 SELECT\n\
@@ -51,7 +50,9 @@ FROM\n\
             message: RichText::new(""),
         }
     }
+}
 
+impl InputQuery {
     pub fn clear(&mut self) {
         self.sql = String::from("");
         self.name = String::from("");
@@ -77,7 +78,7 @@ impl GeometryViewer {
             show_query_window: false,
             connection_status: RichText::new(""),
             queries: HashMap::default(),
-            input_query: InputQuery::new(),
+            input_query: InputQuery::default(),
         }
     }
 
@@ -132,7 +133,7 @@ impl GeometryViewer {
                 self.save_config();
             }
 
-            let api_url_button = ui.add(Button::new("Change API URL"));
+            let api_url_button = ui.add(Button::new("API configuration"));
 
             if api_url_button.clicked() {
                 self.show_api_config_window = true;
@@ -142,6 +143,28 @@ impl GeometryViewer {
 
             if geometry_button.clicked() {
                 self.show_query_window = true;
+            }
+        });
+
+        ui.add_space(PADDING);
+
+        self.geometry_list(ui);
+    }
+
+    pub fn geometry_list(&mut self, ui: &mut Ui) {
+        let scroll = egui::ScrollArea::vertical().auto_shrink([false, true]);
+        scroll.show(ui, |ui| {
+            for (name, query) in self.queries.iter_mut() {
+                CollapsingHeader::new(name).show(ui, |ui| {
+                    egui::stroke_ui(ui, &mut query.stroke, "Curve Stroke");
+                    ui.collapsing("Geometries", |ui| {
+                        for geometry in query.geometries.iter_mut() {
+                            ui.horizontal_wrapped(|ui| {
+                                ui.checkbox(&mut geometry.is_active, geometry.name.clone());
+                            });
+                        }
+                    });
+                });
             }
         });
     }
@@ -199,29 +222,27 @@ impl GeometryViewer {
         let plot = Plot::new("oracle_geometry").y_axis_width(3).data_aspect(1.);
 
         plot.show(ui, |plot_ui| {
-            for (name, query) in self.queries.iter() {
-                for (num, geometry) in query.geometries.iter().enumerate() {
-                    if geometry.is_polygon() {
-                        if let Some(poly) =
-                            geometry.create_polygon(Stroke::new(1., Color32::LIGHT_RED))
-                        {
-                            plot_ui.polygon(poly.name(format!("{name}_{num}")))
+            for query in self.queries.values() {
+                for geometry in query.geometries.iter() {
+                    if !geometry.is_active {
+                        continue;
+                    }
+
+                    if geometry.sdo_geometry.is_polygon() {
+                        if let Some(poly) = geometry.sdo_geometry.create_polygon(query.stroke) {
+                            plot_ui.polygon(poly.name(geometry.name.clone()))
                         }
                     }
 
-                    if geometry.is_circle() {
-                        if let Some(circle) =
-                            geometry.create_circle(Stroke::new(1., Color32::LIGHT_BLUE))
-                        {
-                            plot_ui.line(circle.name(format!("{name}_{num}")))
+                    if geometry.sdo_geometry.is_circle() {
+                        if let Some(circle) = geometry.sdo_geometry.create_circle(query.stroke) {
+                            plot_ui.line(circle.name(geometry.name.clone()))
                         }
                     }
 
-                    if geometry.is_line() {
-                        if let Some(line) =
-                            geometry.create_line(Stroke::new(1., Color32::LIGHT_BLUE))
-                        {
-                            plot_ui.line(line.name(format!("{name}_{num}")))
+                    if geometry.sdo_geometry.is_line() {
+                        if let Some(line) = geometry.sdo_geometry.create_line(query.stroke) {
+                            plot_ui.line(line.name(geometry.name.clone()))
                         }
                     }
                 }

@@ -2,6 +2,13 @@ use egui::{ahash::HashMap, Button, Color32, Context, Layout, RichText, Stroke, W
 
 use crate::{api::GeometryApi, geometry_viewer::InputQuery, sdo_geometry::SdoGeometry};
 
+const COLORS: [Color32; 4] = [
+    Color32::LIGHT_RED,
+    Color32::LIGHT_BLUE,
+    Color32::LIGHT_GREEN,
+    Color32::LIGHT_YELLOW,
+];
+
 pub struct QueryWindow<'a> {
     pub queries: &'a mut HashMap<String, Query>,
     pub input_query: &'a mut InputQuery,
@@ -26,8 +33,10 @@ impl<'a> QueryWindow<'a> {
             .open(is_active)
             .resizable(true)
             .show(ctx, |ui| {
-                ui.label("Enter a query name: ");
-                ui.text_edit_singleline(&mut self.input_query.name);
+                ui.horizontal(|ui| {
+                    ui.label("Enter a query name: ");
+                    ui.text_edit_singleline(&mut self.input_query.name);
+                });
 
                 ui.label("Enter a SQL query that contains only geometry column. ");
                 ui.label(
@@ -69,8 +78,10 @@ impl<'a> QueryWindow<'a> {
                     }
                 });
 
-                ui.label("Message:");
-                ui.label(self.input_query.message.clone());
+                ui.horizontal(|ui| {
+                    ui.label("Message:");
+                    ui.label(self.input_query.message.clone());
+                });
             });
     }
 
@@ -88,8 +99,16 @@ impl<'a> QueryWindow<'a> {
                     self.input_query.name.clone(),
                     Query {
                         sql: self.input_query.sql.clone(),
-                        stroke: Stroke::new(1., Color32::LIGHT_RED),
-                        geometries: data,
+                        stroke: Stroke::new(1., COLORS[self.queries.len() % 5]),
+                        geometries: data
+                            .into_iter()
+                            .enumerate()
+                            .map(|(n, g)| Geometry {
+                                name: format!("{}_{}", self.input_query.name.clone(), n),
+                                sdo_geometry: g,
+                                is_active: true,
+                            })
+                            .collect::<Vec<_>>(),
                     },
                 );
 
@@ -105,8 +124,14 @@ impl<'a> QueryWindow<'a> {
     }
 }
 
+pub struct Geometry {
+    pub name: String,
+    pub sdo_geometry: SdoGeometry,
+    pub is_active: bool,
+}
+
 pub struct Query {
     pub sql: String,
     pub stroke: Stroke,
-    pub geometries: Vec<SdoGeometry>,
+    pub geometries: Vec<Geometry>,
 }
