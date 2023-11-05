@@ -1,9 +1,11 @@
+use std::f64::consts::TAU;
+
 use eframe::App;
 use egui::{
-    emath, Align, Button, Color32, Frame, Hyperlink, Layout, Pos2, Rect, Response, RichText, Sense,
-    SidePanel, Ui, Vec2, Visuals, Window,
+    emath, remap, Align, Button, Color32, Frame, Hyperlink, Layout, Pos2, Rect, Response, RichText,
+    Sense, SidePanel, Stroke, Ui, Vec2, Visuals, Window,
 };
-use egui_plot::{Plot, PlotPoint, PlotPoints, PlotResponse, Polygon};
+use egui_plot::{Line, Plot, PlotPoint, PlotPoints, PlotResponse, Polygon};
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
@@ -227,21 +229,36 @@ impl GeometryViewer {
             [1., 19.],
             [1., 10.],
         ])
-        .fill_color(Color32::TRANSPARENT);
+        .fill_color(Color32::TRANSPARENT)
+        .stroke(Stroke::new(3.0, Color32::GREEN));
 
         let polygons = [polygon, polygon2];
 
         plot.show(ui, |plot_ui| {
-            // plot_ui.screen_from_plot(PlotPoint::new(0.0, 0.0)),
             for polygon in polygons {
                 plot_ui.polygon(polygon.name("Concave"))
             }
+            plot_ui.line(self.circle());
             plot_ui.pointer_coordinate();
             plot_ui.pointer_coordinate_drag_delta();
             plot_ui.plot_bounds();
             plot_ui.response().hovered();
         })
         .response
+    }
+
+    fn circle(&self) -> Line {
+        let n = 512;
+        let circle_points: PlotPoints = (0..=n)
+            .map(|i| {
+                let t = remap(i as f64, 0.0..=(n as f64), 0.0..=TAU);
+                let r = 3.;
+                [r * t.cos() + 4. as f64, r * t.sin() + 4. as f64]
+            })
+            .collect();
+        Line::new(circle_points)
+            .color(Color32::from_rgb(100, 200, 100))
+            .name("circle")
     }
 }
 
