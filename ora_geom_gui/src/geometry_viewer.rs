@@ -1,7 +1,13 @@
 use eframe::App;
-use egui::{Align, Button, Color32, Hyperlink, Layout, RichText, SidePanel, Ui, Visuals, Window};
+use egui::{
+    emath, Align, Button, Color32, Frame, Hyperlink, Layout, Pos2, Rect, Response, RichText, Sense,
+    SidePanel, Ui, Vec2, Visuals, Window,
+};
+use egui_plot::{Plot, PlotPoint, PlotPoints, PlotResponse, Polygon};
 use serde::{Deserialize, Serialize};
 use tracing::info;
+
+use crate::sdo_geometry::SdoGeometry;
 
 const PADDING: f32 = 15.0;
 const CONFY_APP: &'static str = "oracle_geometry_viewer";
@@ -150,8 +156,6 @@ impl GeometryViewer {
         ) {
             tracing::error!("Failed saving app state: {}", e);
         }
-
-        self.show_api_config_window = false;
     }
 
     pub fn render_api_config(&mut self, ctx: &egui::Context) {
@@ -166,6 +170,7 @@ impl GeometryViewer {
 
                 if pressed_enter {
                     self.save_config();
+                    self.show_api_config_window = false;
                 }
 
                 ui.with_layout(Layout::right_to_left(Align::Min), |ui| {
@@ -173,6 +178,8 @@ impl GeometryViewer {
 
                     if submit_button.clicked() {
                         self.save_config();
+                        self.connection_status = self.config.api.connection_status();
+                        self.show_api_config_window = false;
                     }
 
                     let test_button = ui.add(Button::new("Test connection"));
@@ -185,6 +192,56 @@ impl GeometryViewer {
                 ui.label("Connection status:");
                 ui.label(self.connection_status.clone());
             });
+    }
+
+    pub fn geometry_content(&mut self, ui: &mut Ui) -> Response {
+        let sdo_object = SdoGeometry {
+            sdo_gtype: 2003.,
+            sdo_srid: None,
+            sdo_point: None,
+            sdo_elem_info: vec![1., 3., 1.],
+            sdo_ordinates: vec![40., 23., 48., 23., 48., 29., 40., 29., 40., 23.],
+        };
+
+        let plot = Plot::new("interaction_demo")
+            .y_axis_width(3)
+            .data_aspect(1.);
+
+        let polygon = Polygon::new(vec![
+            [40., 23.],
+            [48., 23.],
+            [48., 29.],
+            [40., 29.],
+            [40., 23.],
+        ])
+        .fill_color(Color32::TRANSPARENT);
+
+        let polygon2 = Polygon::new(vec![
+            [1., 10.],
+            [3., 10.],
+            [3., 12.],
+            [7., 12.],
+            [7., 10.],
+            [9., 10.],
+            [9., 19.],
+            [1., 19.],
+            [1., 10.],
+        ])
+        .fill_color(Color32::TRANSPARENT);
+
+        let polygons = [polygon, polygon2];
+
+        plot.show(ui, |plot_ui| {
+            // plot_ui.screen_from_plot(PlotPoint::new(0.0, 0.0)),
+            for polygon in polygons {
+                plot_ui.polygon(polygon.name("Concave"))
+            }
+            plot_ui.pointer_coordinate();
+            plot_ui.pointer_coordinate_drag_delta();
+            plot_ui.plot_bounds();
+            plot_ui.response().hovered();
+        })
+        .response
     }
 }
 
@@ -209,21 +266,7 @@ impl App for GeometryViewer {
             .show(ctx, |ui| self.side_panel(ctx, ui));
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("My egui Application");
-            ui.horizontal(|ui| {
-                let name_label = ui.label("Your name: ");
-                ui.text_edit_singleline(&mut self.name)
-                    .labelled_by(name_label.id);
-            });
-            ui.add(egui::Slider::new(&mut self.age, 0..=120).text("age"));
-            if ui.button("Click each year").clicked() {
-                self.age += 1;
-            }
-            ui.label(format!(
-                "Hello '{name}', age {age}",
-                name = self.name,
-                age = self.age
-            ));
+            Frame::canvas(ui.style()).show(ui, |ui| self.geometry_content(ui));
         });
     }
 }
