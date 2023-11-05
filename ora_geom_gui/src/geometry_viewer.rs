@@ -1,11 +1,10 @@
 use eframe::App;
 use egui::{
-    ahash::HashMap, remap, Align, Button, Color32, Frame, Hyperlink, Layout, Response, RichText,
+    ahash::HashMap, Align, Button, Color32, Frame, Hyperlink, Layout, Response, RichText,
     SidePanel, Stroke, Ui, Visuals, Window,
 };
-use egui_plot::{Line, Plot, PlotPoints, Polygon};
+use egui_plot::{Line, Plot, Polygon};
 use serde::{Deserialize, Serialize};
-use tracing::info;
 
 use crate::{
     api::GeometryApi,
@@ -35,6 +34,7 @@ impl Default for GeometryViewerConfig {
 pub struct InputQuery {
     pub sql: String,
     pub name: String,
+    pub message: RichText,
 }
 
 impl InputQuery {
@@ -44,10 +44,11 @@ impl InputQuery {
 SELECT\n\
 \tGEOMETRY\n\
 FROM\n\
-\tBUILDINGS;\n\
+\tBUILDINGS\n\
 "
             .into(),
-            name: String::from(""),
+            name: "".into(),
+            message: RichText::new(""),
         }
     }
 
@@ -265,7 +266,7 @@ impl App for GeometryViewer {
         }
 
         if self.show_query_window {
-            QueryWindow::new(&mut self.queries, &mut self.input_query)
+            QueryWindow::new(&mut self.queries, &mut self.input_query, &self.config.api)
                 .show(ctx, &mut self.show_query_window);
         }
 
