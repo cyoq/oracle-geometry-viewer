@@ -1,7 +1,7 @@
 use eframe::App;
 use egui::{
-    ahash::HashMap, Align, Button, CollapsingHeader, Color32, Frame, Hyperlink, Layout, Response,
-    RichText, SidePanel, Stroke, Ui, Visuals, Window,
+    ahash::HashMap, Align, Button, CollapsingHeader, Frame, Hyperlink, Layout, Response, RichText,
+    SidePanel, Ui, Visuals, Window,
 };
 use egui_plot::Plot;
 use serde::{Deserialize, Serialize};
