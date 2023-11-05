@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use tracing::info;
 
 use crate::{
+    api::GeometryApi,
     query::{Query, QueryWindow},
     sdo_geometry::SdoGeometry,
 };
@@ -16,48 +17,17 @@ const PADDING: f32 = 15.0;
 const CONFY_APP: &'static str = "oracle_geometry_viewer";
 const CONFY_CONFIG: &'static str = "geometry_viewer_config";
 
-pub enum ApiHealth {
-    Ok,
-    Error(String),
-    Unknown,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct ApiConnection {
-    pub api_url: String,
-}
-
-impl ApiConnection {
-    pub fn new() -> Self {
-        Self {
-            api_url: String::from("demo"),
-        }
-    }
-
-    pub fn test_connection(&self) -> ApiHealth {
-        ApiHealth::Ok
-    }
-
-    pub fn connection_status(&self) -> RichText {
-        match self.test_connection() {
-            ApiHealth::Ok => RichText::new("OK!").color(Color32::GREEN),
-            ApiHealth::Error(e) => RichText::new(format!("Error: {e}")).color(Color32::RED),
-            ApiHealth::Unknown => RichText::new(""),
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct GeometryViewerConfig {
     pub is_dark_mode: bool,
-    pub api: ApiConnection,
+    pub api: GeometryApi,
 }
 
 impl Default for GeometryViewerConfig {
     fn default() -> Self {
         Self {
             is_dark_mode: Default::default(),
-            api: ApiConnection::new(),
+            api: GeometryApi::new(),
         }
     }
 }

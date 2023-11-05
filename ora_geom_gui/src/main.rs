@@ -1,3 +1,4 @@
+pub mod api;
 pub mod geometry_viewer;
 pub mod query;
 pub mod sdo_geometry;
