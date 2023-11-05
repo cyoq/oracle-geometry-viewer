@@ -1,35 +1,74 @@
 use eframe::App;
-use egui::{Button, Hyperlink, Layout, RichText, SidePanel, Ui, Visuals, Window};
+use egui::{Align, Button, Color32, Hyperlink, Layout, RichText, SidePanel, Ui, Visuals, Window};
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
 const PADDING: f32 = 15.0;
+const CONFY_APP: &'static str = "oracle_geometry_viewer";
+const CONFY_CONFIG: &'static str = "geometry_viewer_config";
+
+pub enum ApiHealth {
+    Ok,
+    Error(String),
+    Unknown,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ApiConnection {
+    pub api_url: String,
+}
+
+impl ApiConnection {
+    pub fn new() -> Self {
+        Self {
+            api_url: String::from("demo"),
+        }
+    }
+
+    pub fn test_connection(&self) -> ApiHealth {
+        ApiHealth::Ok
+    }
+
+    pub fn connection_status(&self) -> RichText {
+        match self.test_connection() {
+            ApiHealth::Ok => RichText::new("OK!").color(Color32::GREEN),
+            ApiHealth::Error(e) => RichText::new(format!("Error: {e}")).color(Color32::RED),
+            ApiHealth::Unknown => RichText::new(""),
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct GeometryViewerConfig {
     pub is_dark_mode: bool,
-    pub api_url: String,
+    pub api: ApiConnection,
 }
 
 impl Default for GeometryViewerConfig {
     fn default() -> Self {
         Self {
             is_dark_mode: Default::default(),
-            api_url: String::from("demo"),
+            api: ApiConnection::new(),
         }
     }
 }
 
 pub struct GeometryViewer {
     pub config: GeometryViewerConfig,
+    pub show_api_config_window: bool,
+    pub connection_status: RichText,
     pub name: String,
     pub age: u32,
 }
 
 impl GeometryViewer {
     pub fn new() -> Self {
+        let config = confy::load(CONFY_APP, CONFY_CONFIG).unwrap_or_default();
+
         Self {
-            config: GeometryViewerConfig::default(),
+            config,
+            show_api_config_window: true,
+            connection_status: RichText::new(""),
             name: String::from("Arthur"),
             age: 42,
         }
@@ -83,12 +122,13 @@ impl GeometryViewer {
 
             if theme_btn.clicked() {
                 self.config.is_dark_mode = !self.config.is_dark_mode;
+                self.save_config();
             }
 
             let api_url_button = ui.add(Button::new("Change API URL"));
 
             if api_url_button.clicked() {
-                info!("Clicked changing API!");
+                self.show_api_config_window = true;
             }
 
             let geometry_button = ui.add(Button::new("Add geometry"));
@@ -99,34 +139,52 @@ impl GeometryViewer {
         });
     }
 
-    pub fn render_config(&mut self, ctx: &egui::Context) {
-        Window::new("API Configuration").show(ctx, |ui| {
-            ui.label("Enter your backend URL for Oracle geometry data retrieval");
-            let text_input = ui.text_edit_singleline(&mut self.config.api_url);
-            if text_input.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                if let Err(e) = confy::store(
-                    "oracle_geometry_viewer",
-                    "geometry_viewer_config",
-                    GeometryViewerConfig {
-                        is_dark_mode: self.config.is_dark_mode,
-                        api_url: self.config.api_url.to_string(),
-                    },
-                ) {
-                    tracing::error!("Failed saving app state: {}", e);
+    pub fn save_config(&mut self) {
+        if let Err(e) = confy::store(
+            CONFY_APP,
+            CONFY_CONFIG,
+            GeometryViewerConfig {
+                is_dark_mode: self.config.is_dark_mode,
+                api: self.config.api.clone(),
+            },
+        ) {
+            tracing::error!("Failed saving app state: {}", e);
+        }
+
+        self.show_api_config_window = false;
+    }
+
+    pub fn render_api_config(&mut self, ctx: &egui::Context) {
+        Window::new("API Configuration")
+            .collapsible(true)
+            .show(ctx, |ui| {
+                ui.label("Enter your backend URL for Oracle geometry data retrieval");
+                let text_input = ui.text_edit_singleline(&mut self.config.api.api_url);
+
+                let pressed_enter =
+                    text_input.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter));
+
+                if pressed_enter {
+                    self.save_config();
                 }
 
-                // self.api_key_initialized = true;
-                // if let Some(tx) = &self.app_tx {
-                //     tx.send(Msg::ApiKeySet(self.config.api_key.to_string()));
-                // }
+                ui.with_layout(Layout::right_to_left(Align::Min), |ui| {
+                    let submit_button = ui.add(Button::new("Create connection"));
 
-                tracing::error!("api key set");
-            }
-            tracing::error!("{}", &self.config.api_url);
+                    if submit_button.clicked() {
+                        self.save_config();
+                    }
 
-            ui.label("If you havn't registered for the API_KEY, head over to");
-            ui.hyperlink("https://newsapi.org");
-        });
+                    let test_button = ui.add(Button::new("Test connection"));
+
+                    if test_button.clicked() {
+                        self.connection_status = self.config.api.connection_status();
+                    }
+                });
+
+                ui.label("Connection status:");
+                ui.label(self.connection_status.clone());
+            });
     }
 }
 
@@ -140,7 +198,9 @@ impl App for GeometryViewer {
             ctx.set_visuals(Visuals::light());
         }
 
-        self.render_config(ctx);
+        if self.show_api_config_window {
+            self.render_api_config(ctx);
+        }
 
         SidePanel::new(egui::panel::Side::Left, "side_panel")
             .max_width(BOARD_PANEL_WIDTH)
