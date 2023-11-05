@@ -8,6 +8,10 @@ Therefore, I decided to separate the GUI from database queries and instead make 
 
 I chose to use `python-oracledb` because I am familiar with it and I wanted to try [FastAPI](https://fastapi.tiangolo.com/).
 
+## Inspirations
+
+The project shares a good part of code from [creativecode/headlines](https://github.com/creativcoder/headlines/tree/ep7b) and from egui official [demo](https://www.egui.rs/#Demo) project.
+
 ## Running the project
 
 To run with Docker:
