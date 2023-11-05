@@ -74,7 +74,7 @@ impl SdoGeometry {
             .map(|i| {
                 let t = remap(i as f64, 0.0..=(n as f64), 0.0..=TAU);
                 let r = radius;
-                [r * t.cos() + center.x as f64, r * t.sin() + center.y as f64]
+                [r * t.cos() + center.y as f64, r * t.sin() + center.x as f64]
             })
             .collect();
         Some(Line::new(circle_points).stroke(stroke))

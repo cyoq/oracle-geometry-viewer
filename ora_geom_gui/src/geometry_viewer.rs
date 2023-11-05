@@ -196,52 +196,36 @@ impl GeometryViewer {
     }
 
     pub fn geometry_content(&mut self, ui: &mut Ui) -> Response {
-        let sdo_object = SdoGeometry {
-            sdo_gtype: 2003.,
-            sdo_srid: None,
-            sdo_point: None,
-            sdo_elem_info: vec![1., 3., 1.],
-            sdo_ordinates: vec![40., 23., 48., 23., 48., 29., 40., 29., 40., 23.],
-        };
-
-        let plot = Plot::new("interaction_demo")
-            .y_axis_width(3)
-            .data_aspect(1.);
-
-        let polygon = Polygon::new(vec![
-            [40., 23.],
-            [48., 23.],
-            [48., 29.],
-            [40., 29.],
-            [40., 23.],
-        ])
-        .fill_color(Color32::TRANSPARENT);
-
-        let polygon2 = Polygon::new(vec![
-            [1., 10.],
-            [3., 10.],
-            [3., 12.],
-            [7., 12.],
-            [7., 10.],
-            [9., 10.],
-            [9., 19.],
-            [1., 19.],
-            [1., 10.],
-        ])
-        .fill_color(Color32::TRANSPARENT)
-        .stroke(Stroke::new(3.0, Color32::GREEN));
-
-        let polygons = [polygon, polygon2];
+        let plot = Plot::new("oracle_geometry").y_axis_width(3).data_aspect(1.);
 
         plot.show(ui, |plot_ui| {
-            // for polygon in polygons {
-            //     plot_ui.polygon(polygon)
-            // }
-            plot_ui.line(Line::new(vec![[7., 0.], [7., 10.]]));
-            if let Some(poly) = sdo_object.create_polygon(Stroke::new(5., Color32::RED)) {
-                plot_ui.polygon(poly)
+            for (name, query) in self.queries.iter() {
+                for (num, geometry) in query.geometries.iter().enumerate() {
+                    if geometry.is_polygon() {
+                        if let Some(poly) =
+                            geometry.create_polygon(Stroke::new(1., Color32::LIGHT_RED))
+                        {
+                            plot_ui.polygon(poly.name(format!("{name}_{num}")))
+                        }
+                    }
+
+                    if geometry.is_circle() {
+                        if let Some(circle) =
+                            geometry.create_circle(Stroke::new(1., Color32::LIGHT_BLUE))
+                        {
+                            plot_ui.line(circle.name(format!("{name}_{num}")))
+                        }
+                    }
+
+                    if geometry.is_line() {
+                        if let Some(line) =
+                            geometry.create_line(Stroke::new(1., Color32::LIGHT_BLUE))
+                        {
+                            plot_ui.line(line.name(format!("{name}_{num}")))
+                        }
+                    }
+                }
             }
-            // plot_ui.line(self.circle());
             plot_ui.pointer_coordinate();
             plot_ui.pointer_coordinate_drag_delta();
             plot_ui.plot_bounds();
