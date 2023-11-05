@@ -235,8 +235,12 @@ impl GeometryViewer {
         let polygons = [polygon, polygon2];
 
         plot.show(ui, |plot_ui| {
-            for polygon in polygons {
-                plot_ui.polygon(polygon.name("Concave"))
+            // for polygon in polygons {
+            //     plot_ui.polygon(polygon)
+            // }
+            plot_ui.line(Line::new(vec![[7., 0.], [7., 10.]]));
+            if let Some(poly) = sdo_object.create_polygon(Stroke::new(5., Color32::RED)) {
+                plot_ui.polygon(poly)
             }
             plot_ui.line(self.circle());
             plot_ui.pointer_coordinate();

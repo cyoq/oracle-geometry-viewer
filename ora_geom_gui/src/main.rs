@@ -1,4 +1,5 @@
 pub mod geometry_viewer;
+pub mod query;
 pub mod sdo_geometry;
 
 use eframe::egui;
