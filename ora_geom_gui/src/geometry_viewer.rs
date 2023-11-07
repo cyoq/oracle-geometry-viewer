@@ -1,7 +1,7 @@
 use eframe::App;
 use egui::{
-    ahash::HashMap, Align, Button, CollapsingHeader, Frame, Hyperlink, Layout, Response, RichText,
-    SidePanel, Ui, Visuals, Window,
+    ahash::HashMap, Align, Button, CollapsingHeader, Color32, Frame, Hyperlink, Layout, Response,
+    RichText, SidePanel, Ui, Visuals, Window,
 };
 use egui_plot::Plot;
 use serde::{Deserialize, Serialize};
@@ -30,6 +30,7 @@ impl Default for GeometryViewerConfig {
     }
 }
 
+#[derive(Default)]
 pub struct GeometryViewer {
     pub config: GeometryViewerConfig,
     pub show_api_config_window: bool,
@@ -140,6 +141,7 @@ impl GeometryViewer {
 
     pub fn geometry_list(&mut self, ui: &mut Ui) {
         let scroll = egui::ScrollArea::vertical().auto_shrink([false, true]);
+        let mut to_remove: Option<String> = None;
         scroll.show(ui, |ui| {
             for (name, query) in self.queries.iter_mut() {
                 CollapsingHeader::new(name).show(ui, |ui| {
@@ -150,10 +152,32 @@ impl GeometryViewer {
                                 ui.checkbox(&mut geometry.is_active, geometry.name.clone());
                             });
                         }
+
+                        let toggle_button = ui.add(Button::new("Show all"));
+                        if toggle_button.clicked() {
+                            for geometry in query.geometries.iter_mut() {
+                                geometry.is_active = true;
+                            }
+                        }
                     });
+                    let delete_button = ui.add(Button::new(
+                        RichText::new("Delete objects").color(Color32::RED),
+                    ));
+
+                    if delete_button.clicked() {
+                        to_remove = Some(name.clone());
+                    }
                 });
             }
         });
+
+        if let Some(name) = to_remove {
+            self.queries = std::mem::take(self)
+                .queries
+                .into_iter()
+                .filter(|(n, _q)| *n != name)
+                .collect();
+        }
     }
 
     pub fn save_config(&mut self) {
