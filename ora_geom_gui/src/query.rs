@@ -2,12 +2,7 @@ use egui::{ahash::HashMap, Button, Color32, Context, Layout, RichText, Stroke, W
 
 use crate::{api::GeometryApi, sdo_geometry::SdoGeometry};
 
-const COLORS: [Color32; 4] = [
-    Color32::LIGHT_RED,
-    Color32::LIGHT_BLUE,
-    Color32::LIGHT_GREEN,
-    Color32::LIGHT_YELLOW,
-];
+const COLORS: [Color32; 4] = [Color32::RED, Color32::BLUE, Color32::GREEN, Color32::YELLOW];
 
 pub struct InputQuery {
     pub sql: String,
@@ -120,6 +115,13 @@ impl<'a> QueryWindow<'a> {
                 RichText::new(String::from("Query must have a name!")).color(Color32::RED);
             return;
         }
+
+        if self.queries.contains_key(&self.input_query.name) {
+            self.input_query.message =
+                RichText::new(String::from("This name already exists!")).color(Color32::RED);
+            return;
+        }
+
         let data = self.api.fetch_geometries(&self.input_query.sql);
 
         match data {
@@ -128,7 +130,7 @@ impl<'a> QueryWindow<'a> {
                     self.input_query.name.clone(),
                     Query {
                         sql: self.input_query.sql.clone(),
-                        stroke: Stroke::new(1., COLORS[self.queries.len() % 5]),
+                        stroke: Stroke::new(1., COLORS[self.queries.len() % 4]),
                         geometries: data
                             .into_iter()
                             .enumerate()
