@@ -47,7 +47,7 @@ impl GeometryViewer {
             config,
             show_api_config_window: true,
             show_query_window: false,
-            connection_status: RichText::new(""),
+            connection_status: RichText::new("No test done").color(Color32::LIGHT_YELLOW),
             queries: HashMap::default(),
             input_query: InputQuery::default(),
         }
@@ -223,8 +223,10 @@ impl GeometryViewer {
                     }
                 });
 
-                ui.label("Connection status:");
-                ui.label(self.connection_status.clone());
+                ui.horizontal(|ui| {
+                    ui.label("Connection status:");
+                    ui.label(self.connection_status.clone());
+                });
             });
     }
 

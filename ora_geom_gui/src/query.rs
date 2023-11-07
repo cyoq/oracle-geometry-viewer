@@ -94,17 +94,17 @@ impl<'a> QueryWindow<'a> {
                     );
                 });
 
+                ui.horizontal(|ui| {
+                    ui.label("Message:");
+                    ui.label(self.input_query.message.clone());
+                });
+
                 ui.with_layout(Layout::right_to_left(egui::Align::Min), |ui| {
                     let submit_button = ui.add(Button::new("Submit query"));
 
                     if submit_button.clicked() {
                         self.send_query();
                     }
-                });
-
-                ui.horizontal(|ui| {
-                    ui.label("Message:");
-                    ui.label(self.input_query.message.clone());
                 });
             });
     }

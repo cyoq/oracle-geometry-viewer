@@ -15,7 +15,7 @@ pub enum GeometryApiError {
     #[error("Url parsing failed")]
     UrlParsing(#[from] url::ParseError),
     #[error("Request failed: {0}")]
-    BadRequest(&'static str),
+    BadRequest(String),
     #[error("Async request failed")]
     #[cfg(feature = "async")]
     AsyncRequestFailed(#[from] reqwest::Error),
@@ -67,9 +67,9 @@ impl GeometryApi {
         let req = ureq::post(&url);
         let response = req.send_json(ureq::json!({
             "sql": sql.replace(";", "")
-        }))?;
+        }));
 
-        let data: Vec<SdoGeometry> = response.into_json()?;
+        let data: Vec<SdoGeometry> = response?.into_json()?;
         Ok(data)
     }
 
