@@ -171,6 +171,7 @@ impl GeometryViewer {
         });
 
         if let Some(name) = to_remove {
+            // From https://github.com/emilk/egui/blob/master/crates/egui_demo_lib/src/demo/misc_demo_window.rs#L463-L474
             self.queries = std::mem::take(&mut self.queries)
                 .into_iter()
                 .filter(|(n, _q)| *n != name)
