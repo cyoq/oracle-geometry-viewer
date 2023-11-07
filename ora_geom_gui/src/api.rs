@@ -66,7 +66,7 @@ impl GeometryApi {
         let url = self.geometry_url()?;
         let req = ureq::post(&url);
         let response = req.send_json(ureq::json!({
-            "sql": sql
+            "sql": sql.replace(";", "")
         }))?;
 
         let data: Vec<SdoGeometry> = response.into_json()?;
