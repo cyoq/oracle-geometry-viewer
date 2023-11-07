@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     api::GeometryApi,
-    query::{Query, QueryWindow},
+    query::{InputQuery, Query, QueryWindow},
 };
 
 const PADDING: f32 = 15.0;
@@ -27,35 +27,6 @@ impl Default for GeometryViewerConfig {
             is_dark_mode: Default::default(),
             api: GeometryApi::new(),
         }
-    }
-}
-
-pub struct InputQuery {
-    pub sql: String,
-    pub name: String,
-    pub message: RichText,
-}
-
-impl Default for InputQuery {
-    fn default() -> Self {
-        Self {
-            sql: "-- A very simple example\n\
-SELECT\n\
-\tGEOMETRY\n\
-FROM\n\
-\tBUILDINGS\n\
-"
-            .into(),
-            name: "".into(),
-            message: RichText::new(""),
-        }
-    }
-}
-
-impl InputQuery {
-    pub fn clear(&mut self) {
-        self.sql = String::from("");
-        self.name = String::from("");
     }
 }
 
@@ -110,6 +81,22 @@ impl GeometryViewer {
 
         ui.add_space(PADDING);
 
+        // From https://github.com/emilk/egui/blob/master/crates/egui_demo_lib/src/demo/plot_demo.rs#L66-L78
+        ui.collapsing("Instructions", |ui| {
+            ui.label("Pan by dragging, or scroll (+ shift = horizontal).");
+            ui.label("Box zooming: Right click to zoom in and zoom out using a selection.");
+            if cfg!(target_arch = "wasm32") {
+                ui.label("Zoom with ctrl / ⌘ + pointer wheel, or with pinch gesture.");
+            } else if cfg!(target_os = "macos") {
+                ui.label("Zoom with ctrl / ⌘ + scroll.");
+            } else {
+                ui.label("Zoom with ctrl + scroll.");
+            }
+            ui.label("Reset view with double-click.");
+        });
+
+        ui.add_space(PADDING);
+
         ui.with_layout(Layout::left_to_right(egui::Align::Min), |ui| {
             let btn_emoji: RichText;
             let btn_description: RichText;
@@ -117,11 +104,11 @@ impl GeometryViewer {
             if self.config.is_dark_mode {
                 btn_emoji = RichText::new("🔆").text_style(egui::TextStyle::Body);
                 btn_description =
-                    RichText::new("Swittch to light mode").text_style(egui::TextStyle::Body);
+                    RichText::new("Switch to light mode").text_style(egui::TextStyle::Body);
             } else {
                 btn_emoji = RichText::new("🌙").text_style(egui::TextStyle::Body);
                 btn_description =
-                    RichText::new("Swittch to dark mode").text_style(egui::TextStyle::Body);
+                    RichText::new("Switch to dark mode").text_style(egui::TextStyle::Body);
             }
 
             let theme_btn = ui

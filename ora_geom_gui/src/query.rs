@@ -1,6 +1,6 @@
 use egui::{ahash::HashMap, Button, Color32, Context, Layout, RichText, Stroke, Window};
 
-use crate::{api::GeometryApi, geometry_viewer::InputQuery, sdo_geometry::SdoGeometry};
+use crate::{api::GeometryApi, sdo_geometry::SdoGeometry};
 
 const COLORS: [Color32; 4] = [
     Color32::LIGHT_RED,
@@ -8,6 +8,35 @@ const COLORS: [Color32; 4] = [
     Color32::LIGHT_GREEN,
     Color32::LIGHT_YELLOW,
 ];
+
+pub struct InputQuery {
+    pub sql: String,
+    pub name: String,
+    pub message: RichText,
+}
+
+impl Default for InputQuery {
+    fn default() -> Self {
+        Self {
+            sql: "-- A very simple example\n\
+SELECT\n\
+\tGEOMETRY\n\
+FROM\n\
+\tBUILDINGS\n\
+"
+            .into(),
+            name: "".into(),
+            message: RichText::new(""),
+        }
+    }
+}
+
+impl InputQuery {
+    pub fn clear(&mut self) {
+        self.sql = String::from("");
+        self.name = String::from("");
+    }
+}
 
 pub struct QueryWindow<'a> {
     pub queries: &'a mut HashMap<String, Query>,
