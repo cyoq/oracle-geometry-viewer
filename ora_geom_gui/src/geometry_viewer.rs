@@ -30,7 +30,6 @@ impl Default for GeometryViewerConfig {
     }
 }
 
-#[derive(Default)]
 pub struct GeometryViewer {
     pub config: GeometryViewerConfig,
     pub show_api_config_window: bool,
@@ -172,8 +171,7 @@ impl GeometryViewer {
         });
 
         if let Some(name) = to_remove {
-            self.queries = std::mem::take(self)
-                .queries
+            self.queries = std::mem::take(&mut self.queries)
                 .into_iter()
                 .filter(|(n, _q)| *n != name)
                 .collect();
