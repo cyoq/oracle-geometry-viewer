@@ -1,10 +1,21 @@
-use std::io;
+use std::{fmt::Display, io};
 
 use egui::{Color32, RichText};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
 use crate::sdo_geometry::SdoGeometry;
+
+#[derive(Debug, Deserialize)]
+pub struct ApiBadRequest {
+    pub detail: String,
+}
+
+impl Display for ApiBadRequest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("BadRequest: {}", self.detail))
+    }
+}
 
 #[derive(thiserror::Error, Debug)]
 pub enum GeometryApiError {
@@ -15,7 +26,7 @@ pub enum GeometryApiError {
     #[error("Url parsing failed")]
     UrlParsing(#[from] url::ParseError),
     #[error("Request failed: {0}")]
-    BadRequest(String),
+    BadRequest(ApiBadRequest),
     #[error("Async request failed")]
     #[cfg(feature = "async")]
     AsyncRequestFailed(#[from] reqwest::Error),
@@ -68,6 +79,16 @@ impl GeometryApi {
         let response = req.send_json(ureq::json!({
             "sql": sql.replace(";", "")
         }));
+
+        if response.is_err() {
+            return match response.unwrap_err() {
+                ureq::Error::Status(400, r) => {
+                    let bad_request: ApiBadRequest = r.into_json()?;
+                    return Err(GeometryApiError::BadRequest(bad_request));
+                }
+                err @ _ => Err(GeometryApiError::RequestFailed(err)),
+            };
+        }
 
         let data: Vec<SdoGeometry> = response?.into_json()?;
         Ok(data)
