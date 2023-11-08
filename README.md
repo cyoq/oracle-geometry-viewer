@@ -105,4 +105,6 @@ FROM
 
 In the video below you can see how the program works in action:
 
-![demo video](./misc/demo.gif) or watch a video ![demo video](./misc/demo.mp4)
+![demo video](./misc/demo.gif) 
+
+Or watch a video ![demo video](./misc/demo.mp4)
