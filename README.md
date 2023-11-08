@@ -14,11 +14,7 @@ The project shares a good part of code from [creativecode/headlines](https://git
 
 ## Running the project
 
-To run with Docker:
-
-To run the Python backend:
-
-To run Rust egui:
+To run each part, please, refer to the corresponding README files in the folders: [ora_geom_gui](./ora_geom_gui/README.md) and [ora_geom_api](./ora_geom_api/README.md)
 
 ## Process description
 
@@ -85,3 +81,22 @@ sequenceDiagram
     API-->>-GUI: Send a result set
     GUI ->> GUI : Display a geometry
 ```
+
+## Example geometry data in Oracle DB
+
+Here is an example of an Oracle geometry data:
+
+```sql
+SELECT
+    GEOMETRY
+FROM 
+    BUILDINGS;
+```
+
+| GEOMETRY                                                                                                                   |
+| -------------------------------------------------------------------------------------------------------------------------- |
+| {"SDO_GTYPE":2003,"SDO_SRID":null,"SDO_POINT":{},"SDO_ELEM_INFO":[1,3,1],"SDO_ORDINATES":[40,23,48,23,48,29,40,29,40 ,23]} |
+| {"SDO_GTYPE":2003,"SDO_SRID":null,"SDO_POINT":{},"SDO_ELEM_INFO":[1,3,1],"SDO_ORDINATES":[27,0,34,0,34,6,27,6,27,0]}       |
+| {"SDO_GTYPE":2003,"SDO_SRID":null,"SDO_POINT":{},"SDO_ELEM_INFO":[1,3,1],"SDO_ORDINATES":[34,0,48,0,48,6,34,6,34,0]}       |
+
+*Note* that geometry viewer can only display 3 types of geometries: lines, polygons and circles.
