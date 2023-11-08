@@ -100,3 +100,9 @@ FROM
 | {"SDO_GTYPE":2003,"SDO_SRID":null,"SDO_POINT":{},"SDO_ELEM_INFO":[1,3,1],"SDO_ORDINATES":[34,0,48,0,48,6,34,6,34,0]}       |
 
 *Note* that geometry viewer can only display 3 types of geometries: lines, polygons and circles.
+
+## Demo
+
+In the video below you can see how the program works in action:
+
+![demo video](./misc/demo.mp4)
