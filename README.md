@@ -105,4 +105,4 @@ FROM
 
 In the video below you can see how the program works in action:
 
-![demo video](./misc/demo.mp4)
+![demo video](./misc/demo.mov)
