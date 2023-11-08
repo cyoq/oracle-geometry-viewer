@@ -82,7 +82,7 @@ sequenceDiagram
     GUI ->> GUI : Display a geometry
 ```
 
-## Example geometry data in Oracle DB
+## An example of geometry data in Oracle DB
 
 Here is an example of an Oracle geometry data:
 
